@@ -1,6 +1,11 @@
 from tkinter import *
 import tkinter.messagebox
 import json
+import difflib
+from difflib import SequenceMatcher
+
+
+font={"BOLD":'\033[1m'}
 
 class Window:
     def __init__(self,master):
@@ -34,7 +39,7 @@ class Window:
 
     def display(self,arg):
         #get the entry input
-        text= self.entry_box.get()
+        text= self.entry_box.get().lower()
 
         if(self.validated(text)):
             #now that the data is validated, call a function to deal read from the JSON file and find the word_definition
@@ -68,14 +73,56 @@ class Window:
                 print(definition)
                 #we may have more than one definition so we are going to pass it to another definition to determine that
                 self.printDefinition(definition,theWord)
+            #this part will call a function that uses the difflib to make a suggestion on the word comparing similarity ratios
             if(theWord not in keySearch):
-                notFound=("%s was not found" % (theWord))
-                self.text_label.config(text=notFound)
+                self.suggestWord(data,keySearch,theWord)
+                #notFound=("%s was not found" % (theWord))
+                #self.text_label.config(text=notFound)
 
         except FileNotFoundError:
             answer=tkinter.messagebox.showerror("Error","There was a problem opening the data file used by this program\nthe program will now close")
             if(answer=="ok"):
                 exit()
+
+    def suggestWord(self,fileData,fileKeys,wordToMatch):
+        possibleWords=[]
+        suggestion=" "
+
+
+        for key in fileKeys:
+            key=key.lower()
+            ratio =SequenceMatcher(None,wordToMatch,key).ratio()*100
+            ratio=int(ratio)
+
+            if(ratio >= 80):
+                possibleWords.append(key)
+
+        #now that we have all the possible matches, suggest the words to the users
+        #if there are multiple suggestions
+        if(len(possibleWords)==1):
+            #test that the suggestion is not going to be the same as the word, this has been happening with some searches
+            if(possibleWords[0]==wordToMatch):
+                suggestion="Nothing Found"
+
+            else:
+                suggestion+= ("Did you mean" + " '"+ possibleWords[0]+"' "+"?")
+
+
+        if(len(possibleWords)>1):
+            if(wordToMatch in possibleWords):
+                possibleWords.remove(wordToMatch)#This fixes the issue of the search word sometimes coming up in the suggestions
+
+            suggestion="Did you mean: \n"
+            for suggestions in possibleWords:
+                suggestion+= suggestions+"\n"
+
+        if(len(possibleWords)==0):
+            suggestion="Nothing Found"
+
+        self.text_label.config(text=suggestion)
+
+
+
 #This function is only called when there is a definition, and it breaks down the definition into numbered items if there are more than one
     def printDefinition(self,theDefinition,theWord):
         defined=theWord.upper()+"\n"
@@ -97,3 +144,6 @@ root =Tk()
 root.title("Dictionary")
 window = Window(root)
 root.mainloop()
+
+
+#bug to fix - there are some words that are coming up in the suggestions that don't have definitions
