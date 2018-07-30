@@ -3,6 +3,7 @@ import tkinter.messagebox
 import json
 import difflib
 from difflib import SequenceMatcher
+from difflib import get_close_matches
 
 
 font={"BOLD":'\033[1m'}
@@ -70,19 +71,18 @@ class Window:
 
             if(theWord in keySearch):
                 definition = data[theWord]
-                print(definition)
+                
                 #we may have more than one definition so we are going to pass it to another definition to determine that
                 self.printDefinition(definition,theWord)
             #this part will call a function that uses the difflib to make a suggestion on the word comparing similarity ratios
             if(theWord not in keySearch):
                 self.suggestWord(data,keySearch,theWord)
-                #notFound=("%s was not found" % (theWord))
-                #self.text_label.config(text=notFound)
 
         except FileNotFoundError:
             answer=tkinter.messagebox.showerror("Error","There was a problem opening the data file used by this program\nthe program will now close")
             if(answer=="ok"):
                 exit()
+
 
     def suggestWord(self,fileData,fileKeys,wordToMatch):
         possibleWords=[]
@@ -103,24 +103,31 @@ class Window:
             #test that the suggestion is not going to be the same as the word, this has been happening with some searches
             if(possibleWords[0]==wordToMatch):
                 suggestion="Nothing Found"
+                self.text_label.config(text=suggestion)
 
             else:
-                suggestion+= ("Did you mean" + " '"+ possibleWords[0]+"' "+"?")
+                suggestion+= ("Did you mean " + possibleWords[0]+"?")
+                self.text_label.config(text=suggestion)
 
 
         if(len(possibleWords)>1):
             if(wordToMatch in possibleWords):
                 possibleWords.remove(wordToMatch)#This fixes the issue of the search word sometimes coming up in the suggestions
 
-            suggestion="Did you mean: \n"
-            for suggestions in possibleWords:
-                suggestion+= suggestions+"\n"
+            #call the closestmatchFunction to find which one is the closest of the possibleWords
+            self.closestMatch(wordToMatch,possibleWords)
+
 
         if(len(possibleWords)==0):
             suggestion="Nothing Found"
+            self.text_label.config(text=suggestion)
 
-        self.text_label.config(text=suggestion)
 
+
+
+    def closestMatch(self,theWord, possibilitiesList):
+        bestMatch=get_close_matches(theWord,possibilitiesList)
+        self.text_label.config(text="Did you mean "+bestMatch[0]+"?")
 
 
 #This function is only called when there is a definition, and it breaks down the definition into numbered items if there are more than one
