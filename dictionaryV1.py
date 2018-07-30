@@ -71,7 +71,7 @@ class Window:
 
             if(theWord in keySearch):
                 definition = data[theWord]
-                
+
                 #we may have more than one definition so we are going to pass it to another definition to determine that
                 self.printDefinition(definition,theWord)
             #this part will call a function that uses the difflib to make a suggestion on the word comparing similarity ratios
@@ -106,7 +106,7 @@ class Window:
                 self.text_label.config(text=suggestion)
 
             else:
-                suggestion+= ("Did you mean " + possibleWords[0]+"?")
+                suggestion+= ("Did you mean " + possibleWords[0].title()+"?")
                 self.text_label.config(text=suggestion)
 
 
@@ -127,7 +127,7 @@ class Window:
 
     def closestMatch(self,theWord, possibilitiesList):
         bestMatch=get_close_matches(theWord,possibilitiesList)
-        self.text_label.config(text="Did you mean "+bestMatch[0]+"?")
+        self.text_label.config(text="Did you mean "+bestMatch[0].title()+"?")
 
 
 #This function is only called when there is a definition, and it breaks down the definition into numbered items if there are more than one
